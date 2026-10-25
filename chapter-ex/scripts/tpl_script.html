@@ -1,0 +1,136 @@
+<script>(function(){ // 存储：在 Claude 的 artifact 里用它自带的 db；其他地方（直接打开 HTML 文件）存进本机浏览器 localStorage
+function lsdb(){ var pre='ce:'+document.title+':';
+  function load(n){try{return JSON.parse(localStorage.getItem(pre+n)||'{}')}catch(e){return {}}}
+  function save(n,o){try{localStorage.setItem(pre+n,JSON.stringify(o));return true}catch(e){return false}}
+  var subs={};
+  function emit(n){var o=load(n),docs=Object.keys(o).map(function(k){return {id:k,data:function(){return o[k]}}});
+    docs.sort(function(a,b){return String(a.data().t||'')<String(b.data().t||'')?-1:1});
+    (subs[n]||[]).forEach(function(cb){try{cb({docs:docs})}catch(e){}});}
+  return {collection:function(n){ var c={
+    add:function(d){var o=load(n),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6); o[id]=d; return save(n,o)?(emit(n),Promise.resolve({id:id})):Promise.reject(new Error('storage'));},
+    doc:function(id){return {set:function(d){var o=load(n); o[id]=d; return save(n,o)?(emit(n),Promise.resolve()):Promise.reject(new Error('storage'));},
+      delete:function(){var o=load(n); delete o[id]; save(n,o); emit(n); return Promise.resolve();}};},
+    orderBy:function(){return c;},
+    onSnapshot:function(cb){(subs[n]=subs[n]||[]).push(cb); setTimeout(function(){emit(n)},0); return function(){};}
+  }; return c; }};
+}
+window.__ceDB=function(){
+  if(window.claude&&window.claude.use) return window.claude.use('db').then(function(d){return d||lsdb()},function(){return lsdb()});
+  return Promise.resolve(lsdb());
+};
+})();</script>
+<script>(function(){
+var root=document.querySelector('.wrap'); if(!root) return;
+var SKIP='svg,nav,script,style,.hlbar,.cpop,.kwpop,.reader,.backbtn';  // 弹出的说明不算进划线位置
+var bar=document.createElement('div'); bar.className='hlbar'; bar.hidden=true;
+var btn=document.createElement('button'); btn.type='button';
+var msg=document.createElement('span'); msg.className='hlmsg';
+bar.appendChild(msg); bar.appendChild(btn); document.body.appendChild(bar);
+var col=null, rows=[], pending=null, delId=null, timer=null;
+function index(){
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentElement;return p&&!p.closest(SKIP)?1:2;}});
+  var list=[],base=0,n; while((n=w.nextNode())){list.push({node:n,base:base,len:n.data.length}); base+=n.data.length;}
+  var flat=list.map(function(e){return e.node.data}).join(''); return {list:list,flat:flat};
+}
+function pos(ix,c,o){
+  if(c.nodeType===3){for(var i=0;i<ix.list.length;i++) if(ix.list[i].node===c) return ix.list[i].base+o;}
+  var p=document.createRange(); p.setStart(c,o); p.collapse(true);
+  for(var j=0;j<ix.list.length;j++){ if(p.comparePoint(ix.list[j].node,0)>=0) return ix.list[j].base; }
+  return ix.flat.length;
+}
+function unwrapAll(){ root.querySelectorAll('mark.hl').forEach(function(m){var p=m.parentNode; while(m.firstChild) p.insertBefore(m.firstChild,m); p.removeChild(m); p.normalize();}); }
+function wrap(ix,s,e,id){
+  for(var i=ix.list.length-1;i>=0;i--){var en=ix.list[i]; var a=Math.max(s,en.base)-en.base, b=Math.min(e,en.base+en.len)-en.base;
+    if(a<b){var r=document.createRange(); r.setStart(en.node,a); r.setEnd(en.node,b); var m=document.createElement('mark'); m.className='hl'; m.dataset.id=id; try{r.surroundContents(m);}catch(x){}}}
+}
+function render(){
+  unwrapAll();
+  rows.forEach(function(h){ var ix=index(); var t=String(h.text||''); if(!t) return;
+    var k=-1, ctx=String(h.ctx||''); if(ctx){k=ix.flat.indexOf(ctx+t); if(k>=0) k+=ctx.length;}
+    if(k<0) k=ix.flat.indexOf(t); if(k>=0) wrap(ix,k,k+t.length,h.id); });
+}
+function section(node){
+  var hs=root.querySelectorAll('.card h3,.sub h4'), last='';
+  for(var i=0;i<hs.length;i++){ if(hs[i].compareDocumentPosition(node)&Node.DOCUMENT_POSITION_FOLLOWING) last=hs[i].textContent.trim(); else break; }
+  return last;
+}
+function hide(){bar.hidden=true; pending=null; delId=null;}
+function showSave(){ bar.hidden=false; msg.textContent='已选 '+pending.text.length+' 字'; btn.textContent='划线'; }
+document.addEventListener('selectionchange',function(){ clearTimeout(timer); timer=setTimeout(function(){
+  if(!col) return; var sel=getSelection(); if(!sel||sel.isCollapsed||!sel.rangeCount){ if(!delId) hide(); return; }
+  var r=sel.getRangeAt(0); if(!root.contains(r.commonAncestorContainer)) return;
+  var ix=index(), s=pos(ix,r.startContainer,r.startOffset), e=pos(ix,r.endContainer,r.endOffset);
+  var text=ix.flat.slice(s,e); if(text.trim().length<2||text.length>600) return;
+  delId=null; pending={text:text,ctx:ix.flat.slice(Math.max(0,s-16),s),sec:section(r.startContainer)}; showSave();
+},250);});
+root.addEventListener('click',function(ev){ var m=ev.target.closest&&ev.target.closest('mark.hl'); if(!m||!col) return;
+  var sel=getSelection(); if(sel&&!sel.isCollapsed) return; delId=m.dataset.id; pending=null; bar.hidden=false; msg.textContent='这一条'; btn.textContent='取消划线'; });
+btn.addEventListener('mousedown',function(e){e.preventDefault();});
+btn.addEventListener('click',function(){
+  if(pending){ var d=pending; hide(); btn.disabled=true;
+    col.add({text:d.text,ctx:d.ctx,sec:d.sec,page:document.title,t:new Date().toISOString()}).then(function(){var s=getSelection(); if(s) s.removeAllRanges();},function(){msg.textContent='没存上，再试一次'; bar.hidden=false;}).then(function(){btn.disabled=false;}); }
+  else if(delId){ var id=delId; hide(); col.doc(id).delete().catch(function(){}); }
+});
+document.addEventListener('click',function(ev){ if(bar.hidden||bar.contains(ev.target)) return; if(ev.target.closest&&ev.target.closest('mark.hl')) return; var s=getSelection(); if(!s||s.isCollapsed) hide(); });
+window.__ceDB().then(function(db){ if(!db) return; col=db.collection('highlights');
+  col.orderBy('t').onSnapshot(function(snap){ rows=snap.docs.map(function(d){var o=d.data()||{}; return {id:d.id,text:o.text,ctx:o.ctx}}); render(); },function(){ col=null; hide(); });
+});
+})();
+</script>
+<script>(function(){
+var qs=[].slice.call(document.querySelectorAll('.quiz')); if(!qs.length) return;
+var col=null, got={};
+function show(q,k,first){ var ans=q.dataset.ans;
+  q.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('pick','right','wrong');
+    if(b.dataset.k===k) b.classList.add('pick', k===ans?'right':'wrong');
+    if(k!==ans && b.dataset.k===ans) b.classList.add('right'); b.disabled=true; });
+  var r=q.querySelector('.qres'); r.hidden=false;
+  r.textContent=(first===ans?'第一次就选对了':'第一次选的是 '+first+'，答案是 '+ans)+'。展开下面的答案看理由。';
+  var d=q.nextElementSibling; if(d&&d.tagName==='DETAILS') d.open=true; }
+qs.forEach(function(q){ q.addEventListener('click',function(ev){ var b=ev.target.closest('.opt'); if(!b||b.disabled) return;
+  var k=b.dataset.k, id=q.dataset.q; if(got[id]) return; got[id]=k; show(q,k,k);
+  if(col) col.doc(id).set({choice:k,ans:q.dataset.ans,ok:k===q.dataset.ans,page:document.title,t:new Date().toISOString()}).catch(function(){ q.querySelector('.qres').textContent+=' 没存上，记一下你选的是 '+k+'。'; });
+});});
+window.__ceDB().then(function(db){ if(!db) return; col=db.collection('quiz');
+  col.onSnapshot(function(snap){ snap.docs.forEach(function(d){ var o=d.data()||{}; var q=document.querySelector('.quiz[data-q="'+d.id+'"]'); if(q&&o.choice&&!got[d.id]){ got[d.id]=o.choice; show(q,o.choice,o.choice);} }); },function(){});
+});
+})();</script>
+<script>document.addEventListener('click',function(e){var b=e.target.closest('.cbtn');if(!b)return;var p=b.nextElementSibling;p.hidden=!p.hidden;});</script>
+<script>(function(){ // 读者工具：术语点查、跳了能回来、接着读、字号
+var root=document.querySelector('.wrap'); if(!root) return;
+var st={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+var key='ce:'+document.title;
+// 1 术语点查：关键词那一节里的词，正文第一次出现处点了看解释
+var kh=[].filter.call(root.querySelectorAll('h2.part'),function(h){return /^关键词/.test(h.textContent)})[0];
+var kl=kh&&kh.nextElementSibling;
+if(kl&&/^(OL|UL)$/.test(kl.tagName)){[].forEach.call(kl.children,function(li){
+  var b=li.querySelector('b'); if(!b) return; var term=b.textContent.split(/[（(]/)[0].trim(); if(term.length<2) return;
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentElement;
+    if(!p||p.closest('h1,h2,h3,h4,h5,nav,svg,figure,button,a,code,summary,blockquote,.quiz,.cite,.kwpop')||kl.contains(n)) return 2;
+    if(!(kl.compareDocumentPosition(n)&Node.DOCUMENT_POSITION_FOLLOWING)) return 2;
+    return n.data.indexOf(term)>=0?1:2;}});
+  var n=w.nextNode(); if(!n) return;
+  var r=n.splitText(n.data.indexOf(term)); r.splitText(term.length);
+  var k=document.createElement('button'); k.type='button'; k.className='kw'; k.textContent=term;
+  var pop=document.createElement('span'); pop.className='kwpop'; pop.hidden=true; pop.textContent=li.textContent.trim();
+  r.parentNode.replaceChild(k,r); k.after(pop); k.addEventListener('click',function(){pop.hidden=!pop.hidden;});
+});}
+// 2 跳了能回来：目录、总图里的链接，跳之前记住位置
+var back=document.createElement('button'); back.type='button'; back.className='backbtn'; back.textContent='↩ 回到刚才'; back.hidden=true; document.body.appendChild(back);
+var stack=[], calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+root.addEventListener('click',function(e){var a=e.target.closest('a'); if(!a) return; var h=a.getAttribute('href')||a.getAttribute('xlink:href')||'';
+  if(h.charAt(0)!=='#') return; var t=document.getElementById(h.slice(1)); if(!t) return;
+  e.preventDefault(); stack.push(scrollY); t.scrollIntoView({behavior:calm?'auto':'smooth'}); back.hidden=false;});
+back.addEventListener('click',function(){var y=stack.pop(); if(y!=null) scrollTo({top:y,behavior:calm?'auto':'smooth'}); back.hidden=!stack.length;});
+// 4 接着读、字号：只存在这台设备的浏览器里
+var z=parseFloat(st.get(key+':z'))||1; root.style.zoom=z;
+var tools=document.createElement('div'); tools.className='reader';
+[['A−',-0.1,'字小一点'],['A+',0.1,'字大一点']].forEach(function(o){var b=document.createElement('button'); b.type='button'; b.textContent=o[0]; b.setAttribute('aria-label',o[2]);
+  b.addEventListener('click',function(){z=Math.min(1.4,Math.max(0.8,Math.round((z+o[1])*10)/10)); root.style.zoom=z; st.set(key+':z',z);}); tools.appendChild(b);});
+var hd=root.querySelector('header'); if(hd) hd.appendChild(tools);
+var saved=parseInt(st.get(key+':y'),10);
+if(saved>800){var name=''; [].forEach.call(root.querySelectorAll('section.card'),function(s){if(s.getBoundingClientRect().top+scrollY<=saved) name=(s.querySelector('h3')||{}).textContent||name;});
+  var go=document.createElement('button'); go.type='button'; go.textContent='接着读'+(name?'：'+name:''); tools.appendChild(go);
+  go.addEventListener('click',function(){scrollTo({top:saved}); go.remove();});}
+var tm=null; addEventListener('scroll',function(){clearTimeout(tm); tm=setTimeout(function(){st.set(key+':y',Math.round(scrollY));},400);},{passive:true});
+})();</script>

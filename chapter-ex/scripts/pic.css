@@ -1,0 +1,14 @@
+figure.pic{margin:16px 0 0;background:var(--group);border-radius:14px;padding:14px 12px 10px}
+.wrap > figure.pic{background:var(--paper)}
+figure.pic svg{display:block;width:100%;height:auto;max-width:560px;margin:0 auto;font-family:var(--font)}
+figure.pic figcaption{font-size:14px;color:var(--soft);margin-top:8px;line-height:1.6}
+.pic text{font-size:17px}.pic .sm{font-size:15px}.pic .xs{font-size:13px}.pic .b{font-weight:700}
+.pic .t{fill:var(--ink)}.pic .s{fill:var(--soft)}.pic .a{fill:var(--accent)}
+.pic .soft{fill:var(--accent-soft)}.pic .grp{fill:var(--paper);stroke:var(--line);stroke-width:1.5}
+.pic .box{fill:var(--paper);stroke:var(--accent-fill);stroke-width:2}.pic .box2{fill:var(--paper);stroke:var(--line);stroke-width:1.5}
+.pic .ln{stroke:var(--soft);stroke-width:1.5;fill:none}.pic .lna{stroke:var(--accent-fill);stroke-width:2;stroke-dasharray:6 5}
+.pic .arw{stroke:var(--accent-fill);stroke-width:2.5;fill:none;marker-end:url(#none)}
+.pic .stk{fill:none;stroke:var(--soft);stroke-width:2.5;stroke-linejoin:round}.pic .stka{fill:var(--paper);stroke:var(--accent-fill);stroke-width:2.5}
+.pic .fa{fill:var(--accent-fill)}.pic .fsoft{fill:var(--accent-soft);stroke:var(--accent-fill);stroke-width:1}.pic .fgrp{fill:var(--line)}
+.pic .dash{fill:none;stroke:var(--soft);stroke-width:1.5;stroke-dasharray:5 4}
+@media print{details>*{display:block}}

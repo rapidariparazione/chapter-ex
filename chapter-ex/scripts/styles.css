@@ -1,0 +1,8 @@
+/* 图的风格跟书走。只改 figure.pic 里的颜色，不改页面。 */
+.sty-notes figure.pic{--accent:#1E3A8A;--accent-fill:#2B4C9A;--accent-soft:#FFF3A3;--group:#FCFCF7;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:22px 22px}
+.sty-mag figure.pic{--accent:#5B2283;--accent-fill:#6B2C91;--accent-soft:#EFE4F6;--group:#FFFFFF;border-top:4px solid var(--accent-fill);border-radius:0}
+.sty-blue figure.pic,.wrap.sty-blue > figure.pic{--ink:#F5F8FF;--soft:#A9C1E0;--paper:#12355B;--group:#12355B;--line:#3E6491;--accent:#FFC94D;--accent-fill:#FFB020;--accent-soft:#2A4D78;background-color:#12355B;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:20px 20px}
+.sty-plate figure.pic,.wrap.sty-plate > figure.pic{--ink:#3B2A1A;--soft:#6E5B45;--paper:#FBF5E8;--group:#F4EBD9;--line:#CDBB9C;--accent:#8C2F1B;--accent-fill:#A63A22;--accent-soft:#EBD9C8;background-color:#F4EBD9;border:1px solid #CDBB9C}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sty-notes figure.pic{--accent:#A9C0FF;--accent-fill:#7E9BEA;--accent-soft:#4A4420;--group:#23262E}:root:not([data-theme="light"]) .sty-mag figure.pic{--accent:#D7B4EE;--accent-fill:#B77FDB;--accent-soft:#3A2748;--group:#1F1F22}}
+:root[data-theme="dark"] .sty-notes figure.pic{--accent:#A9C0FF;--accent-fill:#7E9BEA;--accent-soft:#4A4420;--group:#23262E}
+:root[data-theme="dark"] .sty-mag figure.pic{--accent:#D7B4EE;--accent-fill:#B77FDB;--accent-soft:#3A2748;--group:#1F1F22}

@@ -1,0 +1,42 @@
+```html
+<style>
+.pic[data-dyn] [data-s]{transition:opacity .6s ease}
+.pic[data-dyn] .mv{transition:transform 1.4s cubic-bezier(.45,0,.25,1)}
+.pic[data-dyn]:not(.on) .mv,.pic[data-dyn].on .mv.go{transform:var(--to)}
+.pic[data-dyn].on [data-s]:not(.mv):not(.shown){opacity:0}
+.dyn-ctl{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin:0 0 8px}
+.dyn-ctl button{font:inherit;font-size:15px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.dyn-ctl button.pri{border-color:var(--accent-fill);background:var(--accent-soft)}
+.dyn-ctl .dyn-n{font-size:13px;color:var(--soft);min-width:56px;text-align:center}
+.dyn-say{font-size:15px;color:var(--ink);text-align:center;min-height:1.6em;margin:6px 0 0;line-height:1.6}
+.pic[data-dyn]:not(.on) .dyn-say{display:none}
+@media print{.dyn-ctl,.dyn-say{display:none!important}.pic[data-dyn] [data-s]{opacity:1!important}.pic[data-dyn] .mv{transform:var(--to)!important;transition:none}}
+</style>
+<script>(function(){
+if(window.__dyn)return;window.__dyn=1;
+function init(){document.querySelectorAll('.pic[data-dyn]').forEach(function(f){
+  var els=f.querySelectorAll('[data-s]'),n=0;
+  els.forEach(function(e){n=Math.max(n,+e.dataset.s);});
+  var says=(f.dataset.say||'').split('|'),k=0,timer=null;
+  var ctl=document.createElement('div');ctl.className='dyn-ctl';
+  ctl.innerHTML='<button type="button" class="pri" data-a="play">▶ 播放</button><button type="button" data-a="next">下一步</button><span class="dyn-n"></span><button type="button" data-a="reset">重来</button>';
+  var say=document.createElement('p');say.className='dyn-say';
+  var svg=f.querySelector('svg');f.insertBefore(ctl,svg);svg.after(say);
+  function show(){
+    els.forEach(function(e){var on=+e.dataset.s<=k;
+      if(e.classList.contains('mv'))e.classList.toggle('go',on);else e.classList.toggle('shown',on);});
+    ctl.querySelector('.dyn-n').textContent='第 '+k+' / '+n+' 步';
+    say.textContent=says[k]||'';
+  }
+  function stop(){if(timer){clearInterval(timer);timer=null;}}
+  ctl.addEventListener('click',function(ev){var a=ev.target.dataset&&ev.target.dataset.a;if(!a)return;
+    if(a==='next'){stop();if(k<n){k++;show();}}
+    if(a==='reset'){stop();k=0;show();}
+    if(a==='play'){stop();if(k>=n){k=0;show();}
+      timer=setInterval(function(){if(k>=n){stop();return;}k++;show();},1700);}
+  });
+  f.classList.add('on');show();
+});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();</script>
+```
