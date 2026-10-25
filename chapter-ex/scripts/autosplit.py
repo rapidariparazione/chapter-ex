@@ -1,7 +1,9 @@
 import re,sys
+try: sys.stdout.reconfigure(encoding='utf-8',errors='replace')  # Windows 控制台默认不是 UTF-8
+except Exception: pass
 F=sys.argv[1]; write=len(sys.argv)>2
 def L(s): return len(re.sub(r'[A-Za-z][A-Za-z\-\' ]*','A',re.sub(r'[\s*#>\-（）()「」，、：；·0-9]','',s)))
-text=open(F,encoding='utf-8').read()
+text=open(F,encoding='utf-8').read().replace('\r\n','\n')
 parts=re.split(r'(```.*?```)',text,flags=re.S)
 changes=[]
 def fix_line(line):

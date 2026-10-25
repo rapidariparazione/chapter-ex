@@ -32,17 +32,32 @@ Works with Claude (claude.ai / Claude Code) and Tencent WorkBuddy, or any agent 
 
 **WorkBuddy**：二选一。
 1. 技能板块 → 添加技能 → 上传技能包，选这个 zip。
-2. 解压，把 `chapter-ex` 文件夹放到 `~/.workbuddy/skills/`（Windows 是 `%APPDATA%\WorkBuddy\skills\`），重启 WorkBuddy。
+2. 解压，把 `chapter-ex` 文件夹放到 `~/.workbuddy/skills/`（Windows 一般是 `%APPDATA%\WorkBuddy\skills\`，以你装的版本为准），重启 WorkBuddy。
 
 **Claude Code**：解压，把 `chapter-ex` 文件夹放到 `~/.claude/skills/`。
 
 ## 前置依赖
 
-- Python 3.8 以上（脚本只用标准库）。
-- poppler（提供 `pdftotext`、`pdftoppm`）：macOS `brew install poppler`，Ubuntu `apt install poppler-utils`。
-- （可选）Chrome / Chromium / Edge：只用来给插图截图做检查，没有也能出页面。
+要两样：Python，和一个从 PDF 抽文字的小工具 pypdf。
 
-没装 poppler 时，HTML 照样能出，只是查页码那道检查跑不了。
+**Windows：**
+1. 到 https://www.python.org/downloads/ 下载 Python 安装包。安装第一屏**勾上「Add python.exe to PATH」**，再点安装。
+2. 打开「命令提示符」（开始菜单搜 cmd），输入下面这行，回车：
+   ```
+   pip install pypdf
+   ```
+3. 输入 `python --version`，能看到版本号就装好了。
+
+**macOS：**
+1. 打开「终端」，输入 `python3 --version`。没装的话系统会弹窗让你装，照着点就行。
+2. 再输入：
+   ```
+   pip3 install pypdf
+   ```
+
+**Linux：** `pip3 install pypdf`，或者 `apt install poppler-utils`。
+
+可选：装了 Chrome 或 Edge，AI 会顺便给插图截图检查。没有也能出页面。
 
 ## 用法
 

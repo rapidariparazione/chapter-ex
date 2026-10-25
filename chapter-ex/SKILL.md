@@ -16,16 +16,23 @@ description: 把一本书的一章（或一篇长文）做成「概念理解版�
 
 ## 需要的工具
 
-- Python 3.8 以上。脚本只用标准库。
-- poppler 工具 `pdftotext`、`pdftoppm`：抽原文、查页码、看书里的图。
-  macOS `brew install poppler`；Ubuntu `apt install poppler-utils`；Windows 装 poppler 后加进 PATH。
+- Python 3.8 以上。
+- 从 PDF 抽文字，二选一：pypdf（`pip install pypdf`，Windows 推荐这个），或 poppler 的 `pdftotext`。
+  两样都有时优先用 pdftotext。两样都没有，脚本会提示先装 pypdf。
+- （可选）poppler 的 `pdftoppm`：把书里有图表的页渲染成图片来看。没有就跳过。
 - （可选）Chrome、Chromium 或 Edge：只用来给插图截图（第三道检查）。
   找不到时设环境变量 `CHROME=浏览器可执行文件路径`。没有就跳过截图，直接用浏览器打开 HTML 逐张看图。
 
+## 命令怎么写
+
+- 下面的命令写的是 `python3`。**Windows 上换成 `python`**（或 `py -3`）。
+- `$S` 指本技能 `scripts` 文件夹的完整路径，运行时直接替换成真实路径。
+- 文件名、路径里有空格或中文时，加双引号。
+
 ## 流程
 
-1. **拿原文。** `pdftotext -layout 原书.pdf 原文.txt`。只给了一章就抽那一章。
-   书里有图表的页，用 `pdftoppm -f A -l B -r 110 -png 原书.pdf pg` 渲染出来看。
+1. **拿原文。** `python3 $S/pdftext.py 原书.pdf 原文.txt`。整本书的 PDF 可以加起止页：`python3 $S/pdftext.py 原书.pdf 原文.txt 45 78`。
+   书里有图表的页，有 pdftoppm 就用 `pdftoppm -f A -l B -r 110 -png 原书.pdf pg` 渲染出来看；没有就请用户截图，或跳过。
 2. **定读法和图的风格**，写在 md 页顶（见「页顶」一节）。
 3. **建事实账本**，再写 md。写法看 `references/notes-guide.md`，md 语法看 `references/md-format.md`。
 4. **过六道检查**，一道不过就改，改完再跑。

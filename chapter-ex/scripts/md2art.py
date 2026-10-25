@@ -1,5 +1,7 @@
 import re,html,sys
-md=open(sys.argv[1],encoding='utf-8').read().split('\n')
+try: sys.stdout.reconfigure(encoding='utf-8',errors='replace')  # Windows 控制台默认不是 UTF-8
+except Exception: pass
+md=open(sys.argv[1],encoding='utf-8').read().replace('\r\n','\n').split('\n')
 E=html.escape
 def inl(s):
     s=E(s,quote=False)

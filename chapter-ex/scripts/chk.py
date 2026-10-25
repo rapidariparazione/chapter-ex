@@ -1,5 +1,7 @@
 import re,sys
-md=open(sys.argv[1],encoding='utf-8').read()
+try: sys.stdout.reconfigure(encoding='utf-8',errors='replace')  # Windows 控制台默认不是 UTF-8
+except Exception: pass
+md=open(sys.argv[1],encoding='utf-8').read().replace('\r\n','\n')
 body=re.sub(r'```.*?```','',md,flags=re.S)
 body=re.sub(r'\[\^\d+\|[^\]]*\]','',body)  # 角标里的原句不算句长，也别让下一行把整行吞掉
 body=re.sub(r'📖.*','',body)
