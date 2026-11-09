@@ -86,7 +86,7 @@ while i<len(md):
             k=md[i][2]; opts.append(f'<button type="button" class="opt" data-k="{k}">{inl(md[i][2:])}</button>'); i+=1
         qid=''
         for prev in reversed(out):
-            m=re.search(r'<b>((?:Q|猜)\d+)：',prev)  # 正文里的先猜再看
+            m=re.search(r'<b>((?:Q|猜|回)\d+)：',prev)  # 正文里的先猜再看
             if m: qid=m.group(1); break
         j=i
         while j<len(md) and not md[j].strip(): j+=1
