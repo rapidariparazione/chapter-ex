@@ -9,10 +9,12 @@ def inl(s):
     s=re.sub(r'(?<![\*\w])\*([^*]+?)\*(?!\*)',r'<i>\1</i>',s)
     s=re.sub(r'`([^`]+)`',r'<code>\1</code>',s)
     s=re.sub(r'\[([^\]]+)\]\((https?://[^)\s]+)\)',r'<a href="\2">\1</a>',s)
+    s=re.sub(r'\{\{([^|{}]+)\|([^{}]+)\}\}',r'<button type="button" class="kw gl">\1</button><span class="kwpop" hidden>\2</span>',s)  # 英文页：难词点查
     s=re.sub(r'\[\^(\d+)\|([^\]]+)\]',r'<sup class="cite"><button type="button" class="cbtn">p.\1</button><span class="cpop" hidden>\2</span></sup>',s)
     return s
 out=[];toc=[];i=0;in_card=False;mode='pre';intro=[];sty=''
 title=md[0].lstrip('# ').replace('📝 ','')
+EN=not re.search(r'[\u4e00-\u9fff]',title)  # 标题没汉字就是英文页
 def close():
     global in_card
     if in_card: out.append('</section>'); in_card=False
@@ -22,7 +24,9 @@ while i<len(md):
     if i==0: i+=1; continue
     if l.startswith('> ') and mode=='pre':
         m=re.match(r'风格：\s*(\S+)',l[2:].strip())
-        if m: sty={'手绘笔记':'sty-notes','杂志':'sty-mag','蓝图':'sty-blue','铜版':'sty-plate'}.get(m.group(1),'')
+        if m:
+            sty={'手绘笔记':'sty-notes','杂志':'sty-mag','蓝图':'sty-blue','铜版':'sty-plate'}.get(m.group(1),'')
+            if EN: i+=1; continue  # 英文页不显示风格行
         intro.append(inl(l[2:])); i+=1; continue
     if l.strip()=='---' or not l.strip(): i+=1; continue
     if l.startswith('```html'):
@@ -35,7 +39,7 @@ while i<len(md):
         j+=1
         while j<len(md) and not md[j].strip(): j+=1
         cap=''
-        if j<len(md) and (md[j].startswith('*图：') or md[j].startswith('*这张图回答：')): cap=inl(md[j].strip('*')); j+=1
+        if j<len(md) and (md[j].startswith('*图：') or md[j].startswith('*这张图回答：') or md[j].startswith('*Figure:') or md[j].startswith('*This figure answers:')): cap=inl(md[j].strip('*')); j+=1
         out.append('<figure class="pic">'+'\n'.join(buf)+(f'<figcaption>{cap}</figcaption>' if cap else '')+'</figure>'); i=j; continue
     if l.startswith('```'):
         j=i+1; buf=[]
@@ -66,7 +70,7 @@ while i<len(md):
         else: q=inl(q); i+=1
         out.append(f'<blockquote class="src">{q}</blockquote>'); continue
     if l.startswith('<details>'):
-        j=i+1; buf=[]; summ='展开答案'
+        j=i+1; buf=[]; summ='Show answer' if EN else '展开答案'
         while not md[j].startswith('</details>'):
             if md[j].startswith('<summary>'): summ=re.sub(r'</?summary>','',md[j]).strip() or summ
             elif md[j].strip(): buf.append(md[j])
@@ -86,7 +90,7 @@ while i<len(md):
             k=md[i][2]; opts.append(f'<button type="button" class="opt" data-k="{k}">{inl(md[i][2:])}</button>'); i+=1
         qid=''
         for prev in reversed(out):
-            m=re.search(r'<b>((?:Q|猜|回)\d+)：',prev)  # 正文里的先猜再看
+            m=re.search(r'<b>((?:Q|猜|G|回)\d+)[：:]',prev)  # 正文里的先猜再看
             if m: qid=m.group(1); break
         j=i
         while j<len(md) and not md[j].strip(): j+=1
@@ -94,7 +98,7 @@ while i<len(md):
         if j<len(md) and md[j].startswith('<details>'):
             k2=j
             while not md[k2].startswith('</details>'):
-                mm=re.search(r'答案：([A-D])',md[k2])
+                mm=re.search(r'(?:答案：|Answer:\s*)([A-D])',md[k2])
                 if mm: ans=mm.group(1); break
                 k2+=1
         out.append(f'<div class="quiz" data-q="{qid}" data-ans="{ans}">'+''.join(opts)+'<p class="qres" hidden></p></div>'); continue
@@ -116,5 +120,9 @@ nav=''
 if len(sys.argv)>5: nav='\n  <nav class="pages" aria-label="同一篇的几张页">'+''.join(f'<a href="{u}">{n}</a>' for n,u in (x.split('=',1) for x in sys.argv[5].split(',')))+'</nav>'
 body=(f'<div class="wrap {sty}">\n<header>\n  <div class="kicker">'+kicker+'</div>'+nav+'\n  <h1>'+inl(title)+'</h1>\n  <div class="intro">'+''.join(f'<div>{x}</div>' for x in intro)+'</div>\n</header>\n<nav class="toc" aria-label="目录">'+''.join(toc)+'</nav>\n'+'\n'.join(out)+'\n</div>\n')
 D=__import__('os').path.dirname(__import__('os').path.abspath(__file__))+'/'
-open(sys.argv[4],'w',encoding='utf-8').write(head+open(D+'tpl_style.html',encoding='utf-8').read().replace('</style>',open(D+'pic.css',encoding='utf-8').read()+open(D+'styles.css',encoding='utf-8').read()+'</style>')+'\n'+body+open(D+'tpl_script.html',encoding='utf-8').read()+'\n')
+page=head+open(D+'tpl_style.html',encoding='utf-8').read().replace('</style>',open(D+'pic.css',encoding='utf-8').read()+open(D+'styles.css',encoding='utf-8').read()+'</style>')+'\n'+body+open(D+'tpl_script.html',encoding='utf-8').read()+'\n'
+if EN:  # 英文页：界面字换英文（模板和 dyn.html 里的按钮、提示）
+    for a,b in [("'第一次就选对了':'第一次选的是 '+first+'，答案是 '+ans", "'Right on the first try':'Your first pick was '+first+'. The answer is '+ans"), ("'。展开下面的答案看理由。'", "'. Open the answer below to see why.'"), ("'↩ 回到刚才'", "'↩ Back'"), ("'已选 '+pending.text.length+' 字'", "pending.text.length+' characters selected'"), ("'取消划线'", "'Remove highlight'"), ("'划线'", "'Highlight'"), ("'这一条'", "'This highlight'"), ("'没存上，再试一次'", "'Not saved. Try again.'"), ("' 没存上，记一下你选的是 '+k+'。'", "' Not saved. Note down that you picked '+k+'.'"), ("'字小一点'", "'Smaller text'"), ("'字大一点'", "'Larger text'"), ("'接着读'+(name?'：'+name:'')", "'Continue reading'+(name?': '+name:'')"), ('▶ 播放', '▶ Play'), ('>下一步<', '>Next<'), ('>重来<', '>Restart<'), ("'第 '+k+' / '+n+' 步'", "'Step '+k+' / '+n")]:
+        page=page.replace(a,b)
+open(sys.argv[4],'w',encoding='utf-8').write(page)
 print('cards',cards,'toc',len(toc))

@@ -1,12 +1,13 @@
 # chapter-ex
 
-An agent skill that turns one chapter of a book into a Chinese "concept-understanding" reading page:
+An agent skill that turns one chapter of a book into an English (about Lexile 850) "concept-understanding" reading page by default (say "中文" for a Chinese page):
 intuition first, bilingual key quotes, SVG diagrams, clickable quizzes, and highlighting, delivered as a single HTML file.
 Works with Claude (claude.ai / Claude Code) and Tencent WorkBuddy, or any agent that reads `SKILL.md` skills.
 
 ---
 
 把书的一章做成「概念理解版」阅读页。先建直觉再给定义，原文金句中英对照，配 SVG 插图和可点选的选择题。
+默认出蓝思 850 左右的英文页，难词点一下看中文。说「中文」才出中文页。
 产出一个单独的 HTML 文件：能划线、能做题，双击就能在浏览器里打开，不用联网也能读。
 
 ## 它基于什么做出这个页面
@@ -44,7 +45,7 @@ Works with Claude (claude.ai / Claude Code) and Tencent WorkBuddy, or any agent 
 1. 到 https://www.python.org/downloads/ 下载 Python 安装包。安装第一屏**勾上「Add python.exe to PATH」**，再点安装。
 2. 打开「命令提示符」（开始菜单搜 cmd），输入下面这行，回车：
    ```
-   pip install pypdf
+   pip install pypdf wordfreq
    ```
 3. 输入 `python --version`，能看到版本号就装好了。
 
@@ -52,10 +53,10 @@ Works with Claude (claude.ai / Claude Code) and Tencent WorkBuddy, or any agent 
 1. 打开「终端」，输入 `python3 --version`。没装的话系统会弹窗让你装，照着点就行。
 2. 再输入：
    ```
-   pip3 install pypdf
+   pip3 install pypdf wordfreq
    ```
 
-**Linux：** `pip3 install pypdf`，或者 `apt install poppler-utils`。
+**Linux：** `pip3 install pypdf wordfreq`，或者 `apt install poppler-utils`。
 
 可选：装了 Chrome 或 Edge，AI 会顺便给插图截图检查。没有也能出页面。
 

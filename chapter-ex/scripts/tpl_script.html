@@ -95,7 +95,7 @@ window.__ceDB().then(function(db){ if(!db) return; col=db.collection('quiz');
   col.onSnapshot(function(snap){ snap.docs.forEach(function(d){ var o=d.data()||{}; var q=document.querySelector('.quiz[data-q="'+d.id+'"]'); if(q&&o.choice&&!got[d.id]){ got[d.id]=o.choice; show(q,o.choice,o.choice);} }); },function(){});
 });
 })();</script>
-<script>document.addEventListener('click',function(e){var b=e.target.closest('.cbtn');if(!b)return;var p=b.nextElementSibling;p.hidden=!p.hidden;});</script>
+<script>document.addEventListener('click',function(e){var g=e.target.closest('.gl');if(g){var q=g.nextElementSibling;if(q)q.hidden=!q.hidden;return;}var b=e.target.closest('.cbtn');if(!b)return;var p=b.nextElementSibling;p.hidden=!p.hidden;});</script>
 <script>(function(){ // 读者工具：术语点查、跳了能回来、接着读、字号
 var root=document.querySelector('.wrap'); if(!root) return;
 var st={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
